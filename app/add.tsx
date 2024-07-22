@@ -1,4 +1,11 @@
-import { View, Text, FlatList, Pressable, useColorScheme } from "react-native";
+import {
+  View,
+  Text,
+  FlatList,
+  Pressable,
+  useColorScheme,
+  StyleSheet,
+} from "react-native";
 import React from "react";
 import { ThemedText } from "@/components/ThemedText";
 import {
@@ -12,6 +19,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "expo-router";
 import { FontAwesome6 } from "@expo/vector-icons";
 import { Feather } from "@expo/vector-icons";
+import { hexToRgba } from "@/hooks/utils";
 
 const KEYBOARD = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ".", "0", "C"];
 
@@ -47,12 +55,15 @@ const AddTransaction = () => {
         </Pressable>
         <Pressable
           style={{
-            padding: 10,
+            height: 34,
+            width: 34,
+            justifyContent: "center",
+            alignItems: "center",
             borderRadius: 100,
-            backgroundColor: `#${Colors[colorScheme].tint}80`,
+            backgroundColor: `#${hexToRgba(Colors[colorScheme].tint, 0.2)}`,
           }}
         >
-          <Feather name="repeat" size={12} color={Colors[colorScheme].tint} />
+          <Feather name="repeat" size={18} color={Colors[colorScheme].tint} />
         </Pressable>
       </View>
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -64,16 +75,12 @@ const AddTransaction = () => {
             return (
               <View style={{ flexDirection: "row", gap: 10 }}>
                 <Pressable
-                  style={{
-                    flexDirection: "row",
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: "rgba(155, 153, 150, 0.3)",
-                    alignItems: "center",
-                    flex: 0.6,
-                    paddingLeft: 10,
-                    paddingVertical: 5,
-                  }}
+                  style={[
+                    styles.timeStampSections,
+                    {
+                      flex: 0.6,
+                    },
+                  ]}
                 >
                   <AntDesign
                     name="calendar"
@@ -84,16 +91,12 @@ const AddTransaction = () => {
                   <ThemedText>{date(dayjs().format())}</ThemedText>
                 </Pressable>
                 <Pressable
-                  style={{
-                    paddingLeft: 10,
-                    flex: 0.4,
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: "rgba(155, 153, 150, 0.3)",
-                    flexDirection: "row",
-                    alignItems: "center",
-                    paddingVertical: 5,
-                  }}
+                  style={[
+                    styles.timeStampSections,
+                    {
+                      flex: 0.4,
+                    },
+                  ]}
                 >
                   <MaterialIcons
                     name="category"
@@ -122,18 +125,12 @@ const AddTransaction = () => {
                     setAmount((prev) => prev + item);
                   }
                 }}
-                style={{
-                  marginVertical: 5,
-                  marginHorizontal: index % 3 === 1 ? "3%" : 0,
-                  borderRadius: 10,
-                  padding: 20,
-                  backgroundColor: "rgba(155, 153, 150, 0.3)",
-                  width: "31%",
-                  justifyContent: "center",
-                  alignItems: "center",
-                }}
+                style={[
+                  styles.button,
+                  { marginHorizontal: index % 3 === 1 ? "3%" : 0 },
+                ]}
               >
-                <ThemedText style={{ fontSize: 28 }}>{item}</ThemedText>
+                <ThemedText style={styles.buttonText}>{item}</ThemedText>
               </Pressable>
             );
           }}
@@ -142,5 +139,27 @@ const AddTransaction = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  button: {
+    marginVertical: 5,
+    borderRadius: 10,
+    padding: 20,
+    backgroundColor: "rgba(155, 153, 150, 0.3)",
+    width: "31%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  buttonText: { fontSize: 28 },
+  timeStampSections: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "rgba(155, 153, 150, 0.3)",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 5,
+    paddingLeft: 10,
+  },
+});
 
 export default AddTransaction;

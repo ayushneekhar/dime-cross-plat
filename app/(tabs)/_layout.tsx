@@ -1,10 +1,14 @@
 import { Tabs } from "expo-router";
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Pressable } from "react-native";
 import { Colors } from "@/constants/Colors";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { FontAwesome5, FontAwesome6 } from "@expo/vector-icons";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import TabBarIcon from "@/components/TabBarIcon";
+import MyTabBar from "@/components/TabBar";
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -12,6 +16,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
+      tabBar={(props) => <MyTabBar {...props} />}
       screenOptions={{
         tabBarStyle: [
           styles.tabBar,
@@ -44,25 +49,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="add"
-        options={{
-          tabBarIcon: ({ color }) => (
-            <View
-              style={[
-                styles.addButtonContainer,
-                { backgroundColor: Colors[colorScheme].tint },
-              ]}
-            >
-              <FontAwesome6
-                name="plus"
-                size={24}
-                color={colorScheme === "light" ? "white" : "black"}
-              />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="charts"
         options={{
           tabBarIcon: ({ color }) => (
@@ -84,26 +70,14 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    // position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
     elevation: 5,
-  },
-  addButtonContainer: {
-    width: 80,
-    height: 45,
-    borderRadius: 10,
-    justifyContent: "center",
+    flexDirection: "row",
+    paddingTop: 10,
+    justifyContent: "space-around",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    elevation: 5,
   },
 });

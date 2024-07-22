@@ -36,6 +36,13 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
+        <Stack.Screen
+          name="add"
+          options={{
+            headerShown: false,
+            animation: "slide_from_bottom",
+          }}
+        />
       </Stack>
     </ThemeProvider>
   );
