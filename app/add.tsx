@@ -4,6 +4,7 @@ import {
   Pressable,
   useColorScheme,
   StyleSheet,
+  Keyboard,
 } from 'react-native';
 import React from 'react';
 import { ThemedText } from '@/components/ThemedText';
@@ -15,14 +16,21 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { hexToRgba } from '@/hooks/utils';
-import { ThemedView } from '@/components/ThemedView';
 import { storage } from '@/hooks/MMKV';
 import { MMKVConstants } from '@/constants/MMKVConstants';
-
+import { dbService } from '@/hooks/db-service';
+import AnimatedButton from '@/components/AnimatedButton';
+import { Input, XStack, YStack } from 'tamagui';
+import CategoryPopover from '@/components/CategoryPopover';
+import TimeSelectorPopover from '@/components/TimeSelectorPopover';
 const KEYBOARD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'D'];
 
-const ListHeader = () => {
+const ListHeader = ({ selectedCategory, setSelectedCategory, setOpen }) => {
   const colorScheme = useColorScheme();
+
+  const allCategories = dbService.getCategoriesByUser(
+    storage.getString(MMKVConstants.USER_ID),
+  );
   function date(dateString: string) {
     if (dayjs(dateString).isSame(dayjs(), 'day')) {
       return `Today, ${dayjs().format('D MMM')}`;
@@ -30,35 +38,66 @@ const ListHeader = () => {
   }
 
   return (
-    <View style={styles.listHeaderContainer}>
-      <Pressable style={[styles.timeStampSections, styles.leftHalf]}>
+    <XStack mb={5} f={1}>
+      <XStack
+        onPress={() => setOpen(true)}
+        ai={'center'}
+        bc={'rgba(155, 153, 150, 0.3)'}
+        bw={1}
+        br={10}
+        f={1}
+        paddingHorizontal={10}
+        mr={10}>
         <AntDesign
           name="calendar"
-          size={24}
+          size={20}
           color={Colors[colorScheme].tint}
           style={styles.listHeaderIcons}
         />
-        <View style={styles.dateTimeContainer}>
-          <ThemedText>{date(dayjs().format())}</ThemedText>
-          <ThemedText>{dayjs().format('HH:MM')}</ThemedText>
-        </View>
-      </Pressable>
-      <Pressable style={[styles.timeStampSections, styles.rightHalf]}>
-        <MaterialIcons
-          name="category"
-          size={24}
-          color={Colors[colorScheme].tint}
-          style={styles.listHeaderIcons}
-        />
-        <ThemedText>Category</ThemedText>
-      </Pressable>
-    </View>
+        <XStack f={1} jc={'space-between'}>
+          <ThemedText type="defaultSemiBold">
+            {date(dayjs().format())}
+          </ThemedText>
+          <ThemedText type="defaultSemiBold">
+            {dayjs().format('HH:MM')}
+          </ThemedText>
+        </XStack>
+      </XStack>
+      <CategoryPopover
+        placement="top"
+        categories={allCategories}
+        selectedCategory={selectedCategory}
+        onSelect={setSelectedCategory}
+        Name="category-popover"
+        Icon={() => (
+          <XStack
+            ai={'center'}
+            jc={'center'}
+            backgroundColor={'$colorTransparent'}>
+            {!selectedCategory && (
+              <MaterialIcons
+                name="category"
+                size={20}
+                color={Colors[colorScheme].tint}
+                style={styles.listHeaderIcons}
+              />
+            )}
+            <ThemedText type="defaultSemiBold">
+              {selectedCategory?.icon ? selectedCategory.icon : ''}{' '}
+              {selectedCategory?.name ? selectedCategory.name : 'Category'}
+            </ThemedText>
+          </XStack>
+        )}
+      />
+    </XStack>
   );
 };
 
 const AddTransaction = () => {
   const navigation = useNavigation();
-  const [selectedCategory, setSelectedCategory] = React.useState('');
+  const [open, setOpen] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState();
+  const [description, setDescription] = React.useState('');
   const { top } = useSafeAreaInsets();
   const [amount, setAmount] = React.useState(0);
   const colorScheme = useColorScheme();
@@ -80,63 +119,100 @@ const AddTransaction = () => {
           <Feather name="repeat" size={18} color={Colors[colorScheme].tint} />
         </Pressable>
       </View>
-      <View style={styles.totalAmount}>
-        <ThemedText type="title">{amount}</ThemedText>
-        <Pressable
-          onPress={() => setAmount(0)}
-          style={styles.backspaceIcon(Colors[colorScheme].tint)}>
-          <MaterialCommunityIcons
-            name="backspace"
-            size={20}
-            color={Colors[colorScheme].tint}
-          />
-        </Pressable>
-      </View>
+      <XStack f={1} jc={'center'} ai={'center'}>
+        <YStack ai={'center'} f={1}>
+          <ThemedText type="title">{amount}</ThemedText>
+          <XStack mt={10} ai={'center'} pr={20}>
+            <MaterialIcons
+              name="notes"
+              size={20}
+              style={styles.listHeaderIcons}
+              color={Colors[colorScheme].tint}
+            />
+            <Input
+              value={description}
+              onChange={setDescription}
+              color={Colors[colorScheme].tint}
+              behavior={'padding'}
+              caretHidden
+              size="$3"
+              width={80}
+              placeholder="Add Note"
+              focusStyle={{
+                borderColor: Colors[colorScheme].tint,
+              }}
+              backgroundColor={Colors[colorScheme].background}
+              borderColor={'rgba(155, 153, 150, 0.3)'}
+              borderWidth={1}
+            />
+          </XStack>
+          <Pressable
+            onPress={() => setAmount(0)}
+            style={styles.backspaceIcon(Colors[colorScheme].tint)}>
+            <MaterialCommunityIcons
+              name="backspace"
+              size={20}
+              color={Colors[colorScheme].tint}
+            />
+          </Pressable>
+        </YStack>
+      </XStack>
       <View style={styles.keyboardContainer}>
         <FlatList
-          ListHeaderComponent={ListHeader}
+          ListHeaderComponent={() => (
+            <ListHeader
+              setOpen={setOpen}
+              setSelectedCategory={setSelectedCategory}
+              selectedCategory={selectedCategory}
+            />
+          )}
           contentContainerStyle={styles.keyboardListContainer}
           scrollEnabled={false}
           data={KEYBOARD}
           numColumns={3}
-          renderItem={({ item, index }) => {
-            return (
-              <Pressable
-                onPress={() => {
-                  if (item === 'D') {
-                    storage.set(MMKVConstants.TRANSACTIONS, [
-                      ...storage.get(MMKVConstants.TRANSACTIONS),
-                      {
-                        amount,
-                        category: selectedCategory,
-                        date: dayjs().format(),
-                      },
-                    ]);
-                    setAmount(0);
-                  } else {
-                    setAmount(prev =>
-                      prev === 0 ? item : Number(String(prev) + String(item)),
-                    );
-                  }
-                }}
-                style={[
-                  styles.button(item === 'D', Colors[colorScheme].tint),
-                  index % 3 === 1 && styles.middleItem,
-                ]}>
-                {item === 'D' ? (
-                  <MaterialIcons
-                    name="done"
-                    size={24}
-                    color={Colors[colorScheme].background}
-                  />
-                ) : (
-                  <ThemedText style={styles.buttonText}>{item}</ThemedText>
-                )}
-              </Pressable>
-            );
-          }}
+          renderItem={({ item, index }) => (
+            <AnimatedButton
+              style={[
+                styles.button(item === 'D', Colors[colorScheme].tint),
+                index % 3 === 1 && styles.middleItem,
+              ]}
+              onPress={() => {
+                if (item === 'D') {
+                  dbService.addTransaction({
+                    amount,
+                    category_id: selectedCategory,
+                    date: dayjs().unix(),
+                    description,
+                  });
+                  storage.set(MMKVConstants.TRANSACTIONS, [
+                    ...storage.get(MMKVConstants.TRANSACTIONS),
+                    {
+                      amount,
+                      category: selectedCategory,
+                      date: dayjs().format(),
+                    },
+                  ]);
+                  navigation.goBack();
+                } else {
+                  setAmount(prev =>
+                    prev === 0 ? item : Number(String(prev) + String(item)),
+                  );
+                }
+              }}>
+              {item === 'D' ? (
+                <MaterialIcons
+                  name="done"
+                  size={24}
+                  color={Colors[colorScheme].background}
+                />
+              ) : (
+                <ThemedText style={styles.buttonText}>{item}</ThemedText>
+              )}
+            </AnimatedButton>
+          )}
         />
       </View>
+      <TimeSelectorPopover open={open} setOpen={setOpen} />
     </View>
   );
 };
@@ -151,27 +227,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   }),
-  buttonText: { fontSize: 28 },
-  timeStampSections: {
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: 'rgba(155, 153, 150, 0.3)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
+  buttonText: { fontSize: 28, fontWeight: '600' },
   middleItem: { marginHorizontal: '3%' },
-  leftHalf: {
-    width: '65%',
-  },
   rightHalf: {
     width: '32%',
-  },
-  listHeaderContainer: {
-    marginBottom: 5,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   listHeaderIcons: { opacity: 0.3, marginRight: 10 },
   header: {
@@ -190,12 +249,6 @@ const styles = StyleSheet.create({
   }),
   close: {
     marginLeft: 10,
-  },
-  totalAmount: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
   },
   keyboardContainer: { height: '50%' },
   keyboardListContainer: {

@@ -23,7 +23,7 @@ class DbService {
     return this.createTable();
   }
 
-  // Create the transactions table if it doesn't exist
+  // Create the tables if they doesn't exist
   private createTable() {
     const categoriesQuery = `
       CREATE TABLE IF NOT EXISTS categories (
