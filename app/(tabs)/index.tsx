@@ -1,4 +1,10 @@
-import { StyleSheet, SectionList, View, useColorScheme } from 'react-native';
+import {
+  StyleSheet,
+  SectionList,
+  View,
+  useColorScheme,
+  Pressable,
+} from 'react-native';
 import React from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -7,6 +13,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
+import { dbService } from '@/hooks/db-service';
+import { storage } from '@/hooks/MMKV';
+import { MMKVConstants } from '@/constants/MMKVConstants';
 
 const MOCK_DATA = [
   {
@@ -197,9 +206,39 @@ export default function HomeScreen() {
       <View style={styles.headerContainer}>
         <AntDesign name="search1" size={24} color={Colors[colorScheme].tint} />
         <Ionicons name="filter" size={24} color={Colors[colorScheme].tint} />
+        {/* <Pressable
+          onPress={() => {
+            console.log(
+              dbService.addCategory({
+                name: 'Food',
+                icon: '🍔',
+                color: '#FF0000',
+              }),
+            );
+          }}>
+          <ThemedText>Add Category</ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            console.log(
+              dbService.getCategoriesByUser(
+                storage.getString(MMKVConstants.USER_ID),
+              ),
+            );
+          }}>
+          <ThemedText>Get Categories</ThemedText>
+        </Pressable>
+        <Pressable
+          onPress={() => {
+            console.log(dbService.getAllTransactions());
+          }}>
+          <ThemedText>Get Transactions</ThemedText>
+        </Pressable> */}
       </View>
+
       <ThemedView style={styles.titleContainer}>
         <SectionList
+          bounces={false}
           ListHeaderComponent={() => {
             return (
               <ThemedView style={styles.totalAmount}>
@@ -240,7 +279,7 @@ export default function HomeScreen() {
           )}
           sections={MOCK_DATA}
           renderItem={({ item }) => (
-            <ThemedView style={styles.transactionCard}>
+            <ThemedView style={styles.transactionContainer}>
               <View>
                 <ThemedText style={styles.title}>{item.title}</ThemedText>
                 <ThemedText type="dim" style={styles.timestamp}>

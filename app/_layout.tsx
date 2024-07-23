@@ -10,6 +10,13 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 import React from 'react';
 import { useColorScheme } from '@/hooks/useColorScheme';
+import { dbService } from '@/hooks/db-service';
+import { install } from 'react-native-quick-crypto';
+import { storage } from '@/hooks/MMKV';
+import { MMKVConstants } from '@/constants/MMKVConstants';
+import { uuidv4 } from '@/hooks/utils';
+
+install();
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
@@ -25,6 +32,18 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
   }, [loaded]);
+
+  useEffect(() => {
+    if (!storage.getString(MMKVConstants.USER_ID)) {
+      storage.set(MMKVConstants.USER_ID, uuidv4());
+    }
+
+    dbService.initDB();
+
+    return () => {
+      dbService.closeDatabase();
+    };
+  }, []);
 
   if (!loaded) {
     return null;

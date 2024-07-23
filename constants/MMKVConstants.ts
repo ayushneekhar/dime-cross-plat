@@ -1,5 +1,4 @@
 export const MMKVConstants = {
-  CATEGORIES: 'CATEGORIES',
-  TRANSACTIONS: 'TRANSACTIONS',
   SETTINGS: 'SETTINGS',
+  USER_ID: 'USER_ID',
 };
