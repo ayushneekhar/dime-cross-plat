@@ -1,10 +1,4 @@
-import {
-  StyleSheet,
-  SectionList,
-  View,
-  useColorScheme,
-  Pressable,
-} from 'react-native';
+import { StyleSheet, SectionList, View, useColorScheme } from 'react-native';
 import React from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -13,9 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import { dbService } from '@/hooks/db-service';
-import { storage } from '@/hooks/MMKV';
-import { MMKVConstants } from '@/constants/MMKVConstants';
+import { Separator } from 'tamagui';
 
 const MOCK_DATA = [
   {
@@ -206,34 +198,6 @@ export default function HomeScreen() {
       <View style={styles.headerContainer}>
         <AntDesign name="search1" size={24} color={Colors[colorScheme].tint} />
         <Ionicons name="filter" size={24} color={Colors[colorScheme].tint} />
-        {/* <Pressable
-          onPress={() => {
-            console.log(
-              dbService.addCategory({
-                name: 'Food',
-                icon: '🍔',
-                color: '#FF0000',
-              }),
-            );
-          }}>
-          <ThemedText>Add Category</ThemedText>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            console.log(
-              dbService.getCategoriesByUser(
-                storage.getString(MMKVConstants.USER_ID),
-              ),
-            );
-          }}>
-          <ThemedText>Get Categories</ThemedText>
-        </Pressable>
-        <Pressable
-          onPress={() => {
-            console.log(dbService.getAllTransactions());
-          }}>
-          <ThemedText>Get Transactions</ThemedText>
-        </Pressable> */}
       </View>
 
       <ThemedView style={styles.titleContainer}>
@@ -254,7 +218,7 @@ export default function HomeScreen() {
                   <ThemedText style={styles.creditText}>
                     +{TOTAL_INCOME.toLocaleString()}
                   </ThemedText>
-                  <View style={styles.seperator(Colors[colorScheme].tint)} />
+                  <Separator vertical marginHorizontal={10} />
                   <ThemedText style={styles.debitText}>
                     -{TOTAL_EXPENSE.toLocaleString()}
                   </ThemedText>
@@ -274,7 +238,7 @@ export default function HomeScreen() {
                   {CURRENCY} {total}
                 </ThemedText>
               </ThemedView>
-              <ThemedView style={styles.daySeperator} />
+              <Separator borderWidth={1.5} mt={5} />
             </View>
           )}
           sections={MOCK_DATA}
@@ -370,11 +334,4 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   creditAndDebit: { flexDirection: 'row' },
-  seperator: color => ({
-    width: 1,
-    opacity: 0.3,
-    backgroundColor: color,
-    marginHorizontal: 10,
-    borderRadius: 10,
-  }),
 });

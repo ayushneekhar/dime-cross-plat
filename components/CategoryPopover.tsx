@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Button, Popover, XStack } from 'tamagui';
 import { ThemedText } from './ThemedText';
 import { Feather } from '@expo/vector-icons';
@@ -19,10 +19,12 @@ export function CategoryPopover({
   categories,
   selectedCategory,
   onSelect,
+  navigation,
 }: PopoverProps & ICategotyProps) {
   const colorScheme = useColorScheme();
+  const popoverRef = useRef<Popover>();
   return (
-    <Popover size="$3" allowFlip placement="top">
+    <Popover ref={popoverRef} size="$3" allowFlip placement="top">
       <Popover.Trigger asChild>
         <Button
           backgroundColor={
@@ -59,6 +61,10 @@ export function CategoryPopover({
           alignSelf="center"
           ai={'center'}
           mb={10}
+          onPress={() => {
+            popoverRef.current?.close();
+            navigation.navigate('category-edit');
+          }}
           paddingVertical={10}
           br={10}>
           <Feather

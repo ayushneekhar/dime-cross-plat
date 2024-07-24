@@ -4,7 +4,6 @@ import {
   Pressable,
   useColorScheme,
   StyleSheet,
-  Keyboard,
 } from 'react-native';
 import React from 'react';
 import { ThemedText } from '@/components/ThemedText';
@@ -25,7 +24,14 @@ import CategoryPopover from '@/components/CategoryPopover';
 import TimeSelectorPopover from '@/components/TimeSelectorPopover';
 const KEYBOARD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'D'];
 
-const ListHeader = ({ selectedCategory, setSelectedCategory, setOpen }) => {
+const ListHeader = ({
+  selectedCategory,
+  setSelectedCategory,
+  setOpen,
+  selectedTime,
+  navigation,
+  selectedDate,
+}) => {
   const colorScheme = useColorScheme();
 
   const allCategories = dbService.getCategoriesByUser(
@@ -55,15 +61,14 @@ const ListHeader = ({ selectedCategory, setSelectedCategory, setOpen }) => {
           style={styles.listHeaderIcons}
         />
         <XStack f={1} jc={'space-between'}>
+          <ThemedText type="defaultSemiBold">{date(selectedDate)}</ThemedText>
           <ThemedText type="defaultSemiBold">
-            {date(dayjs().format())}
-          </ThemedText>
-          <ThemedText type="defaultSemiBold">
-            {dayjs().format('HH:MM')}
+            {dayjs(selectedTime.toUTCString()).format('HH:mm')}
           </ThemedText>
         </XStack>
       </XStack>
       <CategoryPopover
+        navigation={navigation}
         placement="top"
         categories={allCategories}
         selectedCategory={selectedCategory}
@@ -99,6 +104,10 @@ const AddTransaction = () => {
   const [selectedCategory, setSelectedCategory] = React.useState();
   const [description, setDescription] = React.useState('');
   const { top } = useSafeAreaInsets();
+  const [selectedTime, setSelectedTime] = React.useState(new Date());
+  const [selectedDate, setSelectedDate] = React.useState(
+    dayjs().format('YYYY-MM-DD'),
+  );
   const [amount, setAmount] = React.useState(0);
   const colorScheme = useColorScheme();
 
@@ -131,7 +140,9 @@ const AddTransaction = () => {
             />
             <Input
               value={description}
-              onChange={setDescription}
+              onChange={e =>
+                setDescription(e.nativeEvent.text.replace(/\s+/g, ' '))
+              }
               color={Colors[colorScheme].tint}
               behavior={'padding'}
               caretHidden
@@ -161,9 +172,12 @@ const AddTransaction = () => {
         <FlatList
           ListHeaderComponent={() => (
             <ListHeader
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
               setOpen={setOpen}
               setSelectedCategory={setSelectedCategory}
               selectedCategory={selectedCategory}
+              navigation={navigation}
             />
           )}
           contentContainerStyle={styles.keyboardListContainer}
@@ -180,18 +194,13 @@ const AddTransaction = () => {
                 if (item === 'D') {
                   dbService.addTransaction({
                     amount,
-                    category_id: selectedCategory,
-                    date: dayjs().unix(),
+                    category_id: selectedCategory.id,
+                    date: dayjs(selectedDate)
+                      .set('hour', selectedTime.getHours())
+                      .set('minute', selectedTime.getMinutes())
+                      .unix(),
                     description,
                   });
-                  storage.set(MMKVConstants.TRANSACTIONS, [
-                    ...storage.get(MMKVConstants.TRANSACTIONS),
-                    {
-                      amount,
-                      category: selectedCategory,
-                      date: dayjs().format(),
-                    },
-                  ]);
                   navigation.goBack();
                 } else {
                   setAmount(prev =>
@@ -212,7 +221,14 @@ const AddTransaction = () => {
           )}
         />
       </View>
-      <TimeSelectorPopover open={open} setOpen={setOpen} />
+      <TimeSelectorPopover
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        open={open}
+        setOpen={setOpen}
+        selectedTime={selectedTime}
+        setSelectedTime={setSelectedTime}
+      />
     </View>
   );
 };
