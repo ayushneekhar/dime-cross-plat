@@ -9,6 +9,7 @@ import { Platform } from 'react-native';
 import { Category, Transaction } from './types';
 import { storage } from './MMKV';
 import { MMKVConstants } from '@/constants/MMKVConstants';
+import dayjs from 'dayjs';
 
 class DbService {
   private database: DB;
@@ -129,10 +130,37 @@ class DbService {
     ]).insertId;
   }
 
+  private groupTransactionsByDay = transactions => {
+    const grouped = transactions.reduce((acc, transaction) => {
+      const date = dayjs.unix(transaction.date).format('YYYY-MM-DD');
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(transaction);
+      return acc;
+    }, {});
+
+    // Convert to array and sort by date
+    return Object.entries(grouped)
+      .map(([date, transactions]) => ({ date, data: transactions }))
+      .sort((a, b) => dayjs(b.date).diff(dayjs(a.date)));
+  };
+
   // Get all transactions
   getAllTransactions(): Transaction[] {
-    const query = 'SELECT * FROM transactions';
-    return this.database?.execute(query).res || [];
+    const query = `SELECT 
+                      t.*, 
+                      c.name AS category_name, 
+                      c.color AS category_color,
+                      c.icon AS category_icon
+                  FROM 
+                      transactions t
+                  LEFT JOIN 
+                      categories c ON t.category_id = c.id
+                  ORDER BY 
+                      t.date DESC;`;
+
+    return this.groupTransactionsByDay(this.database?.execute(query).res) || [];
   }
 
   // Update a transaction

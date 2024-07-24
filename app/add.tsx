@@ -22,6 +22,8 @@ import AnimatedButton from '@/components/AnimatedButton';
 import { Input, XStack, YStack } from 'tamagui';
 import CategoryPopover from '@/components/CategoryPopover';
 import TimeSelectorPopover from '@/components/TimeSelectorPopover';
+import * as Burnt from 'burnt';
+
 const KEYBOARD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'D'];
 
 const ListHeader = ({
@@ -99,16 +101,17 @@ const ListHeader = ({
 };
 
 const AddTransaction = () => {
-  const navigation = useNavigation();
   const [open, setOpen] = React.useState(false);
   const [selectedCategory, setSelectedCategory] = React.useState();
   const [description, setDescription] = React.useState('');
-  const { top } = useSafeAreaInsets();
   const [selectedTime, setSelectedTime] = React.useState(new Date());
   const [selectedDate, setSelectedDate] = React.useState(
     dayjs().format('YYYY-MM-DD'),
   );
   const [amount, setAmount] = React.useState(0);
+
+  const navigation = useNavigation();
+  const { top } = useSafeAreaInsets();
   const colorScheme = useColorScheme();
 
   return (
@@ -192,6 +195,16 @@ const AddTransaction = () => {
               ]}
               onPress={() => {
                 if (item === 'D') {
+                  if (!selectedCategory) {
+                    Burnt.toast({
+                      title: 'Incomplete Transaction',
+                      message: '2000',
+                      preset: 'done',
+                      haptic: true,
+                    });
+                    return;
+                  }
+                  if (amount === 0) return;
                   dbService.addTransaction({
                     amount,
                     category_id: selectedCategory.id,

@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import { Separator } from 'tamagui';
+import { Separator, Stack, XStack, YStack } from 'tamagui';
+import { dbService } from '@/hooks/db-service';
 
 const MOCK_DATA = [
   {
@@ -179,15 +180,16 @@ const TOTAL_EXPENSE = 44_872.0;
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
   const colorScheme = useColorScheme();
+  const allTransactions = dbService.getAllTransactions();
 
   function label(date: Dayjs) {
-    if (date.isSame(dayjs(), 'day')) {
+    if (dayjs(date).isSame(dayjs(), 'day')) {
       return 'TODAY';
     }
-    if (date.isSame(dayjs().subtract(1, 'day'), 'day')) {
+    if (dayjs(date).isSame(dayjs().subtract(1, 'day'), 'day')) {
       return 'YESTERDAY';
     }
-    return date.format('ddd, D MMM').toLocaleUpperCase();
+    return dayjs(date).format('ddd, D MMM').toLocaleUpperCase();
   }
 
   function sign(value: number) {
@@ -229,27 +231,39 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           stickySectionHeadersEnabled={false}
           contentContainerStyle={styles.transactionListContainer}
-          renderSectionHeader={({ section: { title, total } }) => (
+          renderSectionHeader={({ section: { date, total } }) => (
             <View style={styles.translucentTitle}>
               <ThemedView style={styles.transactionDate}>
-                <ThemedText>{label(title)}</ThemedText>
+                <ThemedText>{label(date)}</ThemedText>
                 <ThemedText>
                   {sign(total)}
                   {CURRENCY} {total}
                 </ThemedText>
               </ThemedView>
-              <Separator borderWidth={1.5} mt={5} />
+              <Separator borderWidth={1} mt={5} />
             </View>
           )}
-          sections={MOCK_DATA}
+          sections={allTransactions}
           renderItem={({ item }) => (
             <ThemedView style={styles.transactionContainer}>
-              <View>
-                <ThemedText style={styles.title}>{item.title}</ThemedText>
-                <ThemedText type="dim" style={styles.timestamp}>
-                  {item.timestamp.format('H:MM A')}
-                </ThemedText>
-              </View>
+              <XStack gap={15}>
+                <Stack
+                  backgroundColor={item.category_color}
+                  padding={10}
+                  jc={'center'}
+                  ai={'center'}
+                  borderRadius={10}>
+                  <ThemedText>{item.category_icon}</ThemedText>
+                </Stack>
+                <YStack gap={5}>
+                  <ThemedText style={styles.title}>
+                    {item.category_name}
+                  </ThemedText>
+                  <ThemedText type="dim" style={styles.timestamp}>
+                    {dayjs.unix(item.date).format('H:MM A')}
+                  </ThemedText>
+                </YStack>
+              </XStack>
               <ThemedText style={styles.transaction}>
                 {sign(item.amount)}
                 {CURRENCY} {item.amount}
