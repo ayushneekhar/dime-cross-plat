@@ -7,171 +7,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
 import { AntDesign } from '@expo/vector-icons';
 import { Ionicons } from '@expo/vector-icons';
-import { Separator, Stack, XStack, YStack } from 'tamagui';
+import { Button, Separator, Stack, XStack, YStack } from 'tamagui';
 import { dbService } from '@/hooks/db-service';
+import { useGetAllTransactions } from '@/hooks/useReactiveQuery';
 
-const MOCK_DATA = [
-  {
-    title: dayjs(),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs(),
-        icon: '',
-        title: "Filet O' Fish",
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs(),
-        icon: '',
-        title: 'Rent',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(1, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(1, 'day'),
-        icon: '',
-        title: 'Netflix',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(1, 'day'),
-        icon: '',
-        title: 'Jio Cinema',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(2, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(2, 'day'),
-        icon: '',
-        title: 'Snaks',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(2, 'day'),
-        icon: '',
-        title: 'Dinner',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(3, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(3, 'day'),
-        icon: '',
-        title: 'Dinner',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(3, 'day'),
-        icon: '',
-        title: 'Lunch',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(4, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(4, 'day'),
-        icon: '',
-        title: 'Breakfast',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(4, 'day'),
-        icon: '',
-        title: 'Fasion - Korean Pants',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(5, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(5, 'day'),
-        icon: '',
-        title: 'Bike Wash',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(5, 'day'),
-        icon: '',
-        title: 'Bike Service',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(6, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(6, 'day'),
-        icon: '',
-        title: 'Spotify',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(6, 'day'),
-        icon: '',
-        title: 'Dustbin',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-  {
-    title: dayjs().subtract(7, 'day'),
-    total: 20,
-    data: [
-      {
-        timestamp: dayjs().subtract(7, 'day'),
-        icon: '',
-        title: 'Bonus',
-        isRepeat: true,
-        amount: 20,
-      },
-      {
-        timestamp: dayjs().subtract(7, 'day'),
-        icon: '',
-        title: 'Salary',
-        isRepeat: true,
-        amount: 20,
-      },
-    ],
-  },
-];
 const CURRENCY = '₹';
 const TOTAL = 20_534.0;
 const TOTAL_INCOME = 64_945.0;
@@ -180,7 +19,7 @@ const TOTAL_EXPENSE = 44_872.0;
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const allTransactions = dbService.getAllTransactions();
+  const allTransactions = useGetAllTransactions();
 
   function label(date: Dayjs) {
     if (dayjs(date).isSame(dayjs(), 'day')) {
@@ -199,6 +38,7 @@ export default function HomeScreen() {
     <View style={styles.screen(Colors[colorScheme].background, top)}>
       <View style={styles.headerContainer}>
         <AntDesign name="search1" size={24} color={Colors[colorScheme].tint} />
+        <Button onPress={() => dbService.dropTables()}>Drop Tables</Button>
         <Ionicons name="filter" size={24} color={Colors[colorScheme].tint} />
       </View>
 

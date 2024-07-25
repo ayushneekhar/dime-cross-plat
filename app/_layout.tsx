@@ -42,9 +42,9 @@ export default function RootLayout() {
 
     dbService.initDB();
 
-    return () => {
-      dbService.closeDatabase();
-    };
+    // return () => {
+    //   dbService.closeDatabase();
+    // };
   }, []);
 
   if (!loaded) {
@@ -69,8 +69,8 @@ export default function RootLayout() {
             <Stack.Screen
               name="category-edit"
               options={{
+                presentation: 'modal',
                 headerShown: false,
-                animation: 'slide_from_bottom',
               }}
             />
           </Stack>

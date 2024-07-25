@@ -78,7 +78,7 @@ export function CategoryPopover({
         <Popover.ScrollView
           style={styles.listHeight}
           showsVerticalScrollIndicator={false}>
-          {categories.map(({ name, id, icon }, index) => (
+          {categories?.map(({ name, id, icon }, index) => (
             <XStack
               mb={10}
               key={id}

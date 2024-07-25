@@ -7,6 +7,7 @@ export type Category = {
   created_at: number;
   updated_at: number;
   is_synced: number;
+  type: string;
 };
 
 export type Transaction = {

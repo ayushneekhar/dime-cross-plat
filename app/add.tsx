@@ -15,14 +15,22 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import { hexToRgba } from '@/hooks/utils';
-import { storage } from '@/hooks/MMKV';
-import { MMKVConstants } from '@/constants/MMKVConstants';
 import { dbService } from '@/hooks/db-service';
 import AnimatedButton from '@/components/AnimatedButton';
 import { Input, XStack, YStack } from 'tamagui';
 import CategoryPopover from '@/components/CategoryPopover';
 import TimeSelectorPopover from '@/components/TimeSelectorPopover';
 import * as Burnt from 'burnt';
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { useGetAllCategories } from '@/hooks/useReactiveQuery';
+import ExpenseTabSelector from '@/components/ExpenseTabSelector';
 
 const KEYBOARD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'D'];
 
@@ -33,12 +41,24 @@ const ListHeader = ({
   selectedTime,
   navigation,
   selectedDate,
+  offset,
+  color,
 }) => {
   const colorScheme = useColorScheme();
 
-  const allCategories = dbService.getCategoriesByUser(
-    storage.getString(MMKVConstants.USER_ID),
-  );
+  const allCategories = useGetAllCategories();
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: offset.value }],
+  }));
+  const textColorStlye = useAnimatedStyle(() => ({
+    color: interpolateColor(
+      color.value,
+      [0, 1],
+      [Colors[colorScheme].tint, 'red'],
+    ),
+  }));
+
   function date(dateString: string) {
     if (dayjs(dateString).isSame(dayjs(), 'day')) {
       return `Today, ${dayjs().format('D MMM')}`;
@@ -77,23 +97,27 @@ const ListHeader = ({
         onSelect={setSelectedCategory}
         Name="category-popover"
         Icon={() => (
-          <XStack
-            ai={'center'}
-            jc={'center'}
-            backgroundColor={'$colorTransparent'}>
-            {!selectedCategory && (
-              <MaterialIcons
-                name="category"
-                size={20}
-                color={Colors[colorScheme].tint}
-                style={styles.listHeaderIcons}
-              />
-            )}
-            <ThemedText type="defaultSemiBold">
-              {selectedCategory?.icon ? selectedCategory.icon : ''}{' '}
-              {selectedCategory?.name ? selectedCategory.name : 'Category'}
-            </ThemedText>
-          </XStack>
+          <Animated.View style={style}>
+            <XStack
+              ai={'center'}
+              jc={'center'}
+              backgroundColor={'$colorTransparent'}>
+              {!selectedCategory && (
+                <MaterialIcons
+                  name="category"
+                  size={20}
+                  color={Colors[colorScheme].tint}
+                  style={styles.listHeaderIcons}
+                />
+              )}
+              <ThemedText
+                isAnimated
+                style={[textColorStlye, { fontWeight: 30 }]}>
+                {selectedCategory?.icon ? selectedCategory.icon : ''}{' '}
+                {selectedCategory?.name ? selectedCategory.name : 'Category'}
+              </ThemedText>
+            </XStack>
+          </Animated.View>
         )}
       />
     </XStack>
@@ -108,7 +132,11 @@ const AddTransaction = () => {
   const [selectedDate, setSelectedDate] = React.useState(
     dayjs().format('YYYY-MM-DD'),
   );
+  const [currentTab, setCurrentTab] = React.useState<'expense' | 'income'>(0);
   const [amount, setAmount] = React.useState(0);
+
+  const offset = useSharedValue(0);
+  const color = useSharedValue(0);
 
   const navigation = useNavigation();
   const { top } = useSafeAreaInsets();
@@ -116,7 +144,7 @@ const AddTransaction = () => {
 
   return (
     <View style={[styles.screen(top)]}>
-      <View style={styles.header}>
+      <XStack ai={'center'} jc={'space-between'} pr={10}>
         <Pressable
           style={[styles.close, styles.repeat(Colors[colorScheme].tint)]}
           onPress={navigation.goBack}>
@@ -127,10 +155,11 @@ const AddTransaction = () => {
             style={styles.closeIcon}
           />
         </Pressable>
+        <ExpenseTabSelector setCurrentTab={setCurrentTab} />
         <Pressable style={styles.repeat(Colors[colorScheme].tint)}>
           <Feather name="repeat" size={18} color={Colors[colorScheme].tint} />
         </Pressable>
-      </View>
+      </XStack>
       <XStack f={1} jc={'center'} ai={'center'}>
         <YStack ai={'center'} f={1}>
           <ThemedText type="title">{amount}</ThemedText>
@@ -175,6 +204,8 @@ const AddTransaction = () => {
         <FlatList
           ListHeaderComponent={() => (
             <ListHeader
+              color={color}
+              offset={offset}
               selectedDate={selectedDate}
               selectedTime={selectedTime}
               setOpen={setOpen}
@@ -193,26 +224,47 @@ const AddTransaction = () => {
                 styles.button(item === 'D', Colors[colorScheme].tint),
                 index % 3 === 1 && styles.middleItem,
               ]}
-              onPress={() => {
+              onPress={async () => {
                 if (item === 'D') {
                   if (!selectedCategory) {
+                    offset.value = withSequence(
+                      withTiming(-5, { duration: 50 }),
+                      withRepeat(withTiming(5, { duration: 100 }), 6, true),
+                      withTiming(0, { duration: 50 }),
+                    );
+                    color.value = withRepeat(
+                      withTiming(1, { duration: 500 }),
+                      2,
+                      true,
+                    );
                     Burnt.toast({
                       title: 'Incomplete Transaction',
-                      message: '2000',
-                      preset: 'done',
-                      haptic: true,
+                      message: 'Please select a category',
+                      preset: 'error',
+                      duration: 1.5,
                     });
                     return;
                   }
-                  if (amount === 0) return;
+                  if (amount === 0) {
+                    Burnt.toast({
+                      title: 'Missing Amount',
+                      message: 'Please enter an amount',
+                      preset: 'error',
+                    });
+                    return;
+                  }
                   dbService.addTransaction({
-                    amount,
+                    amount: currentTab === 'expense' ? -amount : amount,
                     category_id: selectedCategory.id,
                     date: dayjs(selectedDate)
                       .set('hour', selectedTime.getHours())
                       .set('minute', selectedTime.getMinutes())
                       .unix(),
                     description,
+                  });
+                  Burnt.toast({
+                    title: 'Transaction Added!',
+                    preset: 'done',
                   });
                   navigation.goBack();
                 } else {
@@ -262,11 +314,6 @@ const styles = StyleSheet.create({
     width: '32%',
   },
   listHeaderIcons: { opacity: 0.3, marginRight: 10 },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginRight: 10,
-  },
   screen: top => ({ flex: 1, marginTop: top }),
   repeat: color => ({
     height: 34,

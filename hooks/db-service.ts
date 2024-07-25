@@ -33,6 +33,7 @@ class DbService {
         name TEXT NOT NULL,
         icon TEXT NOT NULL,
         color TEXT NOT NULL,
+        type TEXT NOT NULL,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         is_synced INTEGER DEFAULT 0
@@ -79,7 +80,7 @@ class DbService {
     const id = uuidv4();
     const now = Date.now();
     const query = `
-      INSERT INTO categories (id, user_id, name, icon, color, created_at, updated_at, is_synced)
+      INSERT INTO categories (id, user_id, name, icon, color, type, created_at, updated_at, is_synced)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -95,10 +96,30 @@ class DbService {
     ]).insertId;
   }
 
+  getCategoriesByUserReactively(
+    userId: string,
+    setter: () => void,
+  ): Category[] {
+    const query = 'SELECT * FROM categories WHERE user_id = ?';
+
+    this.database.reactiveExecute({
+      query,
+      args: [userId],
+      fireOn: [
+        {
+          table: 'categories',
+        },
+      ],
+      callback(response) {
+        setter(response.res);
+      },
+    });
+  }
+
   getCategoriesByUser(userId: string): Category[] {
     const query = 'SELECT * FROM categories WHERE user_id = ?';
 
-    return this.database?.execute(query, [userId]).res || [];
+    return this.database.execute(query, [userId]).res;
   }
 
   // Add a new transaction
@@ -130,15 +151,16 @@ class DbService {
     ]).insertId;
   }
 
-  private groupTransactionsByDay = transactions => {
-    const grouped = transactions.reduce((acc, transaction) => {
-      const date = dayjs.unix(transaction.date).format('YYYY-MM-DD');
-      if (!acc[date]) {
-        acc[date] = [];
-      }
-      acc[date].push(transaction);
-      return acc;
-    }, {});
+  private groupTransactionsByDay = (rawTransactions: Transaction[]) => {
+    const grouped =
+      rawTransactions?.reduce((acc, transaction) => {
+        const date = dayjs.unix(transaction.date).format('YYYY-MM-DD');
+        if (!acc[date]) {
+          acc[date] = [];
+        }
+        acc[date].push(transaction);
+        return acc;
+      }, {}) || {};
 
     // Convert to array and sort by date
     return Object.entries(grouped)
@@ -146,7 +168,6 @@ class DbService {
       .sort((a, b) => dayjs(b.date).diff(dayjs(a.date)));
   };
 
-  // Get all transactions
   getAllTransactions(): Transaction[] {
     const query = `SELECT 
                       t.*, 
@@ -160,7 +181,59 @@ class DbService {
                   ORDER BY 
                       t.date DESC;`;
 
-    return this.groupTransactionsByDay(this.database?.execute(query).res) || [];
+    return this.groupTransactionsByDay(this.database.execute(query).res);
+  }
+
+  dropTables() {
+    const dropTransactions = 'DROP TABLE IF EXISTS transactions;';
+    const dropCategories = 'DROP TABLE IF EXISTS categories;';
+
+    if (this.database) {
+      try {
+        console.log(
+          'Dropping transactions table:',
+          this.database.execute(dropTransactions),
+        );
+        console.log(
+          'Dropping categories table:',
+          this.database.execute(dropCategories),
+        );
+      } catch (error) {
+        console.error('Error dropping tables:', error);
+      }
+    } else {
+      console.error('Database is not initialized');
+    }
+  }
+
+  // Get all transactions
+  getAllTransactionsReactively(setter): Transaction[] {
+    const query = `SELECT 
+                      t.*, 
+                      c.name AS category_name, 
+                      c.color AS category_color,
+                      c.icon AS category_icon
+                  FROM 
+                      transactions t
+                  LEFT JOIN 
+                      categories c ON t.category_id = c.id
+                  ORDER BY 
+                      t.date DESC;`;
+
+    this.database.reactiveExecute({
+      query,
+      fireOn: [
+        {
+          table: 'transactions',
+        },
+        {
+          table: 'categories',
+        },
+      ],
+      callback: response => {
+        setter(this.groupTransactionsByDay(response.rows._array));
+      },
+    });
   }
 
   // Update a transaction
