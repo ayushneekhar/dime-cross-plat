@@ -1,195 +1,133 @@
 import { StyleSheet, useColorScheme } from 'react-native';
-import React from 'react';
-import { Sheet, XStack, YStack } from 'tamagui';
-import { Entypo } from '@expo/vector-icons';
+import React, { useState } from 'react';
+import { Button, Input, Sheet, Stack, XStack, YStack } from 'tamagui';
 import { Colors } from '@/constants/Colors';
-import {
-  Calendar,
-  CalendarTheme,
-  useCalendar,
-} from '@marceloterreiro/flash-calendar';
-import dayjs from 'dayjs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ThemedText } from './ThemedText';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import ExpenseTabSelector from './ExpenseTabSelector';
+import { Entypo, FontAwesome6 } from '@expo/vector-icons';
+import ColourSelectorPopover from './ColourSelectorPopover';
+import { isEmoji } from '@/hooks/utils';
+import { dbService } from '@/hooks/db-service';
 
-const DAY_NAME = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
-
-const CategoryAdderSheet = ({
-  open,
-  setOpen,
-  selectedTime,
-  setSelectedTime,
-  selectedDate,
-  setSelectedDate,
-}) => {
+const CategoryAdderSheet = ({ open, setOpen, navigation }) => {
   const { bottom } = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const { weekDaysList, weeksList } = useCalendar({
-    calendarMaxDateId: dayjs().format('YYYY-MM-DD'),
-    calendarMonthId: dayjs(selectedDate).format('YYYY-MM-DD'),
-    calendarActiveDateRanges: [
-      {
-        endId: selectedDate,
-        startId: selectedDate,
-      },
-    ],
-  });
+  const [currentTab, setCurrentTab] = useState<'expense' | 'income'>('expense');
+  const [categoryEmoji, setCategoryEmoji] = useState('');
+  const [categoryName, setcategoryName] = useState('');
+  const [selectedColor, setSelectedColor] = useState('');
+  const [openColourSelector, setOpenColourSelector] = useState(false);
 
-  const calendarTheme: CalendarTheme = {
-    rowMonth: {
-      container: {
-        backgroundColor: Colors[colorScheme].background,
-        height: 40,
-      },
-      content: {
-        color: Colors[colorScheme].text,
-        fontSize: 17,
-        width: 200,
-        textAlign: 'center',
-      },
-    },
-    itemWeekName: { content: { color: Colors[colorScheme].tint } },
-    itemDay: {
-      base: () => ({
-        container: {
-          padding: 0,
-          borderRadius: 10,
-        },
-      }),
-      today: () => ({
-        container: {
-          borderWidth: 2,
-          borderTopLeftRadius: 10,
-          borderTopRightRadius: 10,
-          borderBottomLeftRadius: 10,
-          borderBottomRightRadius: 10,
-          borderColor: 'rgba(155, 153, 150, 0.5)',
-        },
-      }),
-      idle: ({ isDifferentMonth }) => ({
-        content: isDifferentMonth
-          ? {
-              color: 'rgba(155, 153, 150, 0.5)',
-            }
-          : undefined,
-      }),
-      active: () => ({
-        container: {
-          backgroundColor: Colors[colorScheme].tint,
-          borderTopLeftRadius: 10,
-          borderTopRightRadius: 10,
-          borderBottomLeftRadius: 10,
-          borderBottomRightRadius: 10,
-        },
-        content: {
-          color: Colors[colorScheme].background,
-        },
-      }),
-    },
+  const handleChangeText = text => {
+    if (isEmoji(text) || text === '') {
+      setCategoryEmoji(text);
+    }
   };
 
   return (
-    <Sheet
-      forceRemoveScrollEnabled={open}
-      modal={false}
-      open={open}
-      onOpenChange={setOpen}
-      snapPointsMode={'fit'}
-      dismissOnSnapToBottom
-      zIndex={100_000}
-      animation="medium">
-      <Sheet.Overlay
-        animation="lazy"
-        enterStyle={styles.opacity}
-        exitStyle={styles.opacity}
-      />
-      <Sheet.Frame
-        backgroundColor={Colors[colorScheme].background}
-        padding="$4"
-        justifyContent="center"
-        alignItems="center"
-        space="$5">
-        <YStack pb={bottom} pt={20} paddingHorizontal={20}>
-          <Calendar.VStack
-            spacing={10}
-            alignItems="center"
-            justifyContent="center"
-            grow>
-            <Calendar.HStack>
-              <XStack ai={'center'} jc={'space-between'} w={'100%'}>
-                <XStack>
-                  <ThemedText type="defaultSemiBold">
-                    {dayjs(selectedDate).format('MMMM YYYY')}
-                  </ThemedText>
-                  <Entypo
-                    name="chevron-right"
-                    size={18}
-                    color={Colors[colorScheme].tint}
-                  />
-                </XStack>
-                <XStack gap={20} ai={'center'}>
-                  <Entypo
-                    onPress={() =>
-                      setSelectedDate(dayjs(selectedDate).subtract(1, 'month'))
-                    }
-                    name="chevron-left"
-                    size={22}
-                    color={Colors[colorScheme].tint}
-                  />
-                  <Entypo
-                    onPress={() =>
-                      setSelectedDate(dayjs(selectedDate).add(1, 'month'))
-                    }
-                    name="chevron-right"
-                    size={22}
-                    color={Colors[colorScheme].tint}
-                  />
-                </XStack>
-              </XStack>
-            </Calendar.HStack>
-            <Calendar.Row.Week spacing={3}>
-              {weekDaysList.map((day, i) => (
-                <ThemedText style={styles.dayText} key={`${day}-${i}`}>
-                  {DAY_NAME[i]}
-                </ThemedText>
-              ))}
-            </Calendar.Row.Week>
-            {weeksList.map((week, i) => (
-              <Calendar.Row.Week key={`${week}-${i}`}>
-                {week.map(day => (
-                  <Calendar.Item.Day.Container
-                    dayHeight={40}
-                    isStartOfWeek={day.isStartOfWeek}
-                    key={day.id}>
-                    <Calendar.Item.Day
-                      theme={calendarTheme.itemDay}
-                      height={40}
-                      metadata={day}
-                      onPress={setSelectedDate}>
-                      {day.displayLabel}
-                    </Calendar.Item.Day>
-                  </Calendar.Item.Day.Container>
-                ))}
-              </Calendar.Row.Week>
-            ))}
-          </Calendar.VStack>
-
-          <XStack ai={'center'} jc={'space-between'} mt={20}>
-            <ThemedText type="defaultSemiBold">Time</ThemedText>
-            <DateTimePicker
-              testID="dateTimePicker"
-              value={selectedTime}
-              mode={'time'}
-              is24Hour
-              onChange={(_, time) => {
-                setSelectedTime(time);
-              }}
+    <>
+      <Sheet
+        forceRemoveScrollEnabled={open}
+        modal={false}
+        open={open}
+        onOpenChange={setOpen}
+        snapPointsMode={'fit'}
+        moveOnKeyboardChange
+        dismissOnSnapToBottom
+        zIndex={100_000}
+        animation="medium">
+        <Sheet.Overlay
+          animation="lazy"
+          enterStyle={styles.opacity}
+          exitStyle={styles.opacity}
+        />
+        <Sheet.Frame
+          f={1}
+          backgroundColor={Colors[colorScheme].background}
+          padding="$4">
+          <YStack
+            ai={'center'}
+            gap={'$3'}
+            pb={bottom}
+            pt={20}
+            paddingHorizontal={'$4'}
+            f={1}>
+            <XStack>
+              <Stack
+                onPress={navigation.goBack}
+                p={2}
+                alignSelf="center"
+                br={50}
+                bg={'$gray10'}
+                opacity={0.3}>
+                <Entypo
+                  name="chevron-down"
+                  size={24}
+                  color={Colors[colorScheme].tint}
+                />
+              </Stack>
+              <ExpenseTabSelector setCurrentTab={setCurrentTab} />
+            </XStack>
+            <Input
+              caretHidden
+              value={categoryEmoji}
+              onChangeText={handleChangeText}
+              size={'$6'}
+              w={'$7'}
+              alignSelf="center"
+              themeInverse
             />
-          </XStack>
-        </YStack>
-      </Sheet.Frame>
-    </Sheet>
+            <XStack gap={'$3'}>
+              <Stack
+                onPress={() => setOpenColourSelector(true)}
+                br={'$5'}
+                bw={'$0.5'}
+                p={'$2'}
+                paddingHorizontal={'$5'}
+                ai={'center'}
+                jc={'center'}
+                backgroundColor={selectedColor}
+              />
+              <Input
+                value={categoryName}
+                onChangeText={setcategoryName}
+                f={1}
+                placeholder="Category Name"
+                size={'$4.5'}
+                alignSelf="center"
+                themeInverse
+              />
+              <Button
+                disabled={!categoryName || !selectedColor || !categoryEmoji}
+                size={'$4.5'}
+                onPress={() => {
+                  dbService.addCategory({
+                    color: selectedColor,
+                    icon: categoryEmoji,
+                    name: categoryName,
+                    type: currentTab,
+                  });
+                  setOpen(false);
+                }}
+                iconAfter={() => (
+                  <FontAwesome6
+                    name="add"
+                    size={20}
+                    color={Colors[colorScheme].background}
+                  />
+                )}
+              />
+            </XStack>
+          </YStack>
+        </Sheet.Frame>
+      </Sheet>
+      <ColourSelectorPopover
+        open={openColourSelector}
+        setOpen={setOpenColourSelector}
+        onSelect={setSelectedColor}
+        selectedColor={selectedColor}
+      />
+    </>
   );
 };
 

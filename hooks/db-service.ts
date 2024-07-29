@@ -76,12 +76,12 @@ class DbService {
     >,
   ) {
     const user_id = storage.getString(MMKVConstants.USER_ID);
-    const { name, icon, color } = category;
+    const { name, icon, color, type } = category;
     const id = uuidv4();
     const now = Date.now();
     const query = `
       INSERT INTO categories (id, user_id, name, icon, color, type, created_at, updated_at, is_synced)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     return this.database?.execute(query, [
@@ -90,6 +90,7 @@ class DbService {
       name,
       icon,
       color,
+      type,
       now,
       now,
       0,

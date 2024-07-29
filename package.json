@@ -23,7 +23,6 @@
     "@react-navigation/native": "^6.0.2",
     "@shopify/flash-list": "^1.7.0",
     "@tamagui/config": "^1.104.0",
-    "@tamagui/portal": "^1.104.0",
     "burnt": "^0.12.2",
     "dayjs": "^1.11.12",
     "expo": "~51.0.21",
