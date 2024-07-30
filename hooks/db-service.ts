@@ -243,26 +243,62 @@ class DbService {
     });
   }
 
-  dropTables() {
-    const dropTransactions = 'DROP TABLE IF EXISTS transactions;';
-    const dropCategories = 'DROP TABLE IF EXISTS categories;';
+  getTransactionsByTimeDuration(timeDuration: 'week' | 'month' | 'year') {
+    const query = `SELECT 
+                      t.*, 
+                      c.name AS category_name, 
+                      c.color AS category_color,
+                      c.icon AS category_icon
+                  FROM 
+                      transactions t
+                  LEFT JOIN 
+                      categories c ON t.category_id = c.id
+                  WHERE 
+                      t.date >= ? 
+                  ORDER BY 
+                      t.date DESC;`;
 
-    if (this.database) {
-      try {
-        console.log(
-          'Dropping transactions table:',
-          this.database.execute(dropTransactions),
-        );
-        console.log(
-          'Dropping categories table:',
-          this.database.execute(dropCategories),
-        );
-      } catch (error) {
-        console.error('Error dropping tables:', error);
-      }
-    } else {
-      console.error('Database is not initialized');
-    }
+    let date = dayjs().subtract(1, timeDuration).unix();
+
+    return this.groupTransactionsByDay(
+      this.database.execute(query, [date]).res,
+    );
+  }
+
+  getTransactionsByTimeDurationReactively(
+    timeDuration: 'week' | 'month' | 'year',
+    setter,
+  ) {
+    const query = `SELECT 
+                      t.*, 
+                      c.name AS category_name, 
+                      c.color AS category_color,
+                      c.icon AS category_icon
+                  FROM 
+                      transactions t
+                  LEFT JOIN 
+                      categories c ON t.category_id = c.id
+                  WHERE 
+                      t.date >= ? 
+                  ORDER BY 
+                      t.date DESC;`;
+
+    let date = dayjs().subtract(1, timeDuration).unix();
+    return this.database.reactiveExecute({
+      query,
+      arguments: [date],
+      fireOn: [
+        {
+          table: 'transactions',
+        },
+        {
+          table: 'categories',
+        },
+      ],
+      callback: response => {
+        setter(this.groupTransactionsByDay(response.rows._array));
+      },
+    });
   }
 
   // Update a transaction
@@ -297,6 +333,28 @@ class DbService {
   // Close the database connection
   closeDatabase() {
     return this.database.close();
+  }
+
+  dropTables() {
+    const dropTransactions = 'DROP TABLE IF EXISTS transactions;';
+    const dropCategories = 'DROP TABLE IF EXISTS categories;';
+
+    if (this.database) {
+      try {
+        console.log(
+          'Dropping transactions table:',
+          this.database.execute(dropTransactions),
+        );
+        console.log(
+          'Dropping categories table:',
+          this.database.execute(dropCategories),
+        );
+      } catch (error) {
+        console.error('Error dropping tables:', error);
+      }
+    } else {
+      console.error('Database is not initialized');
+    }
   }
 }
 

@@ -1,10 +1,10 @@
-- [ ] Integrate SQLite for transaction addition in Home screen.
-- [ ] Added animated Income/expense tab to add screen.
-- [ ] Make the categories menu in add screen.
+- [x] Integrate SQLite for transaction addition in Home screen.
+- [x] Added animated Income/expense tab to add screen.
+- [x] Make the categories menu in add screen.
 - [ ] Make an initial category creation screen.
-- [ ] Make the category SQLite logic.
-- [ ] Add a calendar bottom sheet.
-- [ ] Add timeselection to calendar bottom sheet.
+- [x] Make the category SQLite logic.
+- [x] Add a calendar bottom sheet.
+- [x] Add timeselection to calendar bottom sheet.
 - [ ] Integrate decimal point amount addition to the transaction.
 - [ ] Add recurring trasnsaction drop down to add screen.
 - [ ] Add recurring transaction logic to trnsactions.

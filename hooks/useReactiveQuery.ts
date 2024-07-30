@@ -38,3 +38,24 @@ export function useGetAllTransactions() {
 
   return transactions;
 }
+
+export function useGetTransactionsByTimeDuration({
+  duration,
+}: {
+  duration: 'week' | 'month' | 'year';
+}) {
+  const [transactions, setTransactions] = useState<Transaction[]>(
+    dbService.getTransactionsByTimeDuration(duration),
+  );
+
+  useEffect(() => {
+    const subscription = dbService.getTransactionsByTimeDurationReactively(
+      duration,
+      setTransactions,
+    );
+
+    return subscription;
+  }, [duration]);
+
+  return transactions;
+}

@@ -37,6 +37,14 @@ export default function RootLayout() {
   }, [loaded]);
 
   useEffect(() => {
+    if (!storage.getNumber(MMKVConstants.APP_LAUNCH_COUNT)) {
+      storage.set(MMKVConstants.APP_LAUNCH_COUNT, 0);
+    } else {
+      storage.set(
+        MMKVConstants.APP_LAUNCH_COUNT,
+        storage.getNumber(MMKVConstants.APP_LAUNCH_COUNT) + 1,
+      );
+    }
     if (!storage.getString(MMKVConstants.USER_ID)) {
       storage.set(MMKVConstants.USER_ID, uuidv4());
     }

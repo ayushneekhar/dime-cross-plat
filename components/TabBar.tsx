@@ -1,6 +1,5 @@
 import { View, Pressable, useColorScheme, StyleSheet } from 'react-native';
 import React from 'react';
-import { ThemedView } from './ThemedView';
 import { FontAwesome6 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/constants/Colors';
@@ -15,7 +14,7 @@ function MyTabBar({ state, descriptors, navigation }) {
   };
 
   return (
-    <ThemedView style={[styles.tabBar, { paddingBottom: bottom }]}>
+    <View style={[styles.tabBar, { paddingBottom: bottom }]}>
       {state.routes.slice(0, state.routes.length / 2).map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
@@ -111,7 +110,7 @@ function MyTabBar({ state, descriptors, navigation }) {
           </Pressable>
         );
       })}
-    </ThemedView>
+    </View>
   );
 }
 

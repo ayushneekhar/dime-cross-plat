@@ -80,7 +80,7 @@ export function CategoryPopover({
           showsVerticalScrollIndicator={false}>
           {categories?.map(({ name, id, icon }, index) => (
             <XStack
-              mb={10}
+              mb={'$2'}
               key={id}
               onPress={() => onSelect(categories[index])}
               bw={1}

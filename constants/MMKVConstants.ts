@@ -1,4 +1,5 @@
 export const MMKVConstants = {
   SETTINGS: 'SETTINGS',
   USER_ID: 'USER_ID',
+  APP_LAUNCH_COUNT: 'APP_LAUNCH_COUNT',
 };
