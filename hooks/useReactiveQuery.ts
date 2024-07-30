@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Category, Transaction } from './types';
 import { dbService } from './db-service';
-import { useFocusEffect } from 'expo-router';
 
 export function useGetAllCategories({
   type = 'expense',
@@ -30,14 +29,12 @@ export function useGetAllTransactions() {
     dbService.getAllTransactions(),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const subscription =
-        dbService.getAllTransactionsReactively(setTransactions);
+  useEffect(() => {
+    const subscription =
+      dbService.getAllTransactionsReactively(setTransactions);
 
-      return subscription;
-    }, []),
-  );
+    return subscription;
+  }, []);
 
   return transactions;
 }

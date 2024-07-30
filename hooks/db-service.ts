@@ -6,7 +6,7 @@ import {
 } from '@op-engineering/op-sqlite';
 import { uuidv4 } from './utils';
 import { Platform } from 'react-native';
-import { Category, Transaction } from './types';
+import { Category, GroupedTransactions, Transaction } from './types';
 import { storage } from './MMKV';
 import { MMKVConstants } from '@/constants/MMKVConstants';
 import dayjs from 'dayjs';
@@ -100,11 +100,11 @@ class DbService {
   getCategoriesByTypeReactively(
     type: 'expense' | 'income',
     setter: () => void,
-  ): Category[] {
+  ) {
     const userId = storage.getString(MMKVConstants.USER_ID);
     const query = `SELECT * FROM categories WHERE user_id = ? AND type = ?`;
 
-    this.database.reactiveExecute({
+    return this.database.reactiveExecute({
       query,
       arguments: [userId, type],
       fireOn: [
@@ -173,7 +173,9 @@ class DbService {
     ]).insertId;
   }
 
-  private groupTransactionsByDay = (rawTransactions: Transaction[]) => {
+  private groupTransactionsByDay(
+    rawTransactions: Transaction[],
+  ): GroupedTransactions[] {
     const grouped =
       rawTransactions?.reduce((acc, transaction) => {
         const date = dayjs.unix(transaction.date).format('YYYY-MM-DD');
@@ -194,7 +196,7 @@ class DbService {
         return { date, data: transactions, total: date_total };
       })
       .sort((a, b) => dayjs(b.date).diff(dayjs(a.date)));
-  };
+  }
 
   getAllTransactions(): Transaction[] {
     const query = `SELECT 
@@ -212,7 +214,7 @@ class DbService {
     return this.groupTransactionsByDay(this.database.execute(query).res);
   }
 
-  getAllTransactionsReactively(setter): Transaction[] {
+  getAllTransactionsReactively(setter) {
     const query = `SELECT 
                       t.*, 
                       c.name AS category_name, 
@@ -225,7 +227,7 @@ class DbService {
                   ORDER BY 
                       t.date DESC;`;
 
-    this.database.reactiveExecute({
+    return this.database.reactiveExecute({
       query,
       fireOn: [
         {

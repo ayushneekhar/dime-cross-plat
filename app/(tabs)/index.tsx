@@ -1,5 +1,5 @@
 import { StyleSheet, SectionList, View, useColorScheme } from 'react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import dayjs, { Dayjs } from 'dayjs';
@@ -13,9 +13,6 @@ import { useGetAllTransactions } from '@/hooks/useReactiveQuery';
 import { sign } from '@/hooks/utils';
 
 const CURRENCY = '₹';
-const TOTAL = 20_534.0;
-const TOTAL_INCOME = 64_945.0;
-const TOTAL_EXPENSE = 44_872.0;
 
 export default function HomeScreen() {
   const { top } = useSafeAreaInsets();
@@ -31,6 +28,31 @@ export default function HomeScreen() {
     }
     return dayjs(date).format('ddd, D MMM').toLocaleUpperCase();
   }
+
+  const { totalAmount, totalIncome, totalExpense } = useMemo(
+    () =>
+      allTransactions.reduce(
+        (acc, { data }) => {
+          const tmpTotalAmount = data.reduce(
+            (accTo, { amount }) => accTo + amount,
+            0,
+          );
+          const tmpTotalIncome = data
+            .filter(({ amount }) => amount > 0)
+            .reduce((accIn, { amount }) => accIn + amount, 0);
+          const tmpTotalExpense = data
+            .filter(({ amount }) => amount < 0)
+            .reduce((accEx, { amount }) => accEx + amount, 0);
+          return {
+            totalAmount: acc.totalAmount + tmpTotalAmount,
+            totalIncome: acc.totalIncome + tmpTotalIncome,
+            totalExpense: acc.totalExpense + tmpTotalExpense,
+          };
+        },
+        { totalAmount: 0, totalIncome: 0, totalExpense: 0 },
+      ),
+    [allTransactions],
+  );
 
   return (
     <View style={styles.screen(Colors[colorScheme].background, top)}>
@@ -50,17 +72,17 @@ export default function HomeScreen() {
                   type="defaultSemiBold"
                   style={styles.totalAmountText}>
                   <ThemedText style={styles.currency}>
-                    {sign(TOTAL)} {CURRENCY}
+                    {sign(totalAmount)} {CURRENCY}
                   </ThemedText>
-                  {TOTAL.toLocaleString()}
+                  {Math.abs(totalAmount).toLocaleString()}
                 </ThemedText>
                 <View style={styles.creditAndDebit}>
                   <ThemedText style={styles.creditText}>
-                    +{TOTAL_INCOME.toLocaleString()}
+                    +{totalIncome.toLocaleString()}
                   </ThemedText>
                   <Separator vertical marginHorizontal={10} />
                   <ThemedText style={styles.debitText}>
-                    -{TOTAL_EXPENSE.toLocaleString()}
+                    {totalExpense.toLocaleString()}
                   </ThemedText>
                 </View>
               </ThemedView>
@@ -75,7 +97,7 @@ export default function HomeScreen() {
                 <ThemedText>{label(date)}</ThemedText>
                 <ThemedText>
                   {sign(total)}
-                  {CURRENCY} {total?.toLocaleString()}
+                  {CURRENCY} {Math.abs(total)?.toLocaleString()}
                 </ThemedText>
               </ThemedView>
               <Separator borderWidth={1} mt={5} />

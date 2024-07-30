@@ -21,3 +21,9 @@ export type Transaction = {
   updated_at: number;
   is_synced: number;
 };
+
+export type GroupedTransactions = {
+  date: string;
+  data: Transaction[];
+  total: number;
+};
