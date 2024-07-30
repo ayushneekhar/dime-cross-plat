@@ -86,6 +86,8 @@ const CategoryAdderSheet = ({ open, setOpen, navigation }) => {
                 paddingHorizontal={'$5'}
                 ai={'center'}
                 jc={'center'}
+                borderColor={'$borderColor'}
+                opacity={selectedColor ? 1 : 0.1}
                 backgroundColor={selectedColor}
               />
               <Input

@@ -97,30 +97,32 @@ class DbService {
     ]).insertId;
   }
 
-  getCategoriesByUserReactively(
-    userId: string,
+  getCategoriesByTypeReactively(
+    type: 'expense' | 'income',
     setter: () => void,
   ): Category[] {
-    const query = 'SELECT * FROM categories WHERE user_id = ?';
+    const userId = storage.getString(MMKVConstants.USER_ID);
+    const query = `SELECT * FROM categories WHERE user_id = ? AND type = ?`;
 
     this.database.reactiveExecute({
       query,
-      args: [userId],
+      arguments: [userId, type],
       fireOn: [
         {
           table: 'categories',
         },
       ],
-      callback(response) {
-        setter(response.res);
+      callback: response => {
+        setter(response.rows._array);
       },
     });
   }
 
-  getCategoriesByUser(userId: string): Category[] {
-    const query = 'SELECT * FROM categories WHERE user_id = ?';
+  getCategoriesByType(type: 'expense' | 'income'): Category[] {
+    const userId = storage.getString(MMKVConstants.USER_ID);
+    const query = 'SELECT * FROM categories WHERE user_id = ? AND type = ?';
 
-    return this.database.execute(query, [userId]).res;
+    return this.database.execute(query, [userId, type]).res;
   }
 
   // Add a new transaction
@@ -138,6 +140,25 @@ class DbService {
       INSERT INTO transactions (id, user_id, category_id, amount, description, date, created_at, updated_at, is_synced)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+
+    console.log(
+      'Inserted Transaction',
+      JSON.stringify(
+        {
+          id,
+          user_id,
+          category_id,
+          amount,
+          description,
+          date,
+          created_at: now,
+          updated_at: now,
+          is_synced: 0,
+        },
+        null,
+        2,
+      ),
+    );
 
     return this.database?.execute(query, [
       id,
@@ -165,7 +186,13 @@ class DbService {
 
     // Convert to array and sort by date
     return Object.entries(grouped)
-      .map(([date, transactions]) => ({ date, data: transactions }))
+      .map(([date, transactions]) => {
+        let date_total = 0;
+        transactions.forEach(transaction => {
+          date_total += transaction.amount;
+        });
+        return { date, data: transactions, total: date_total };
+      })
       .sort((a, b) => dayjs(b.date).diff(dayjs(a.date)));
   };
 
@@ -185,29 +212,6 @@ class DbService {
     return this.groupTransactionsByDay(this.database.execute(query).res);
   }
 
-  dropTables() {
-    const dropTransactions = 'DROP TABLE IF EXISTS transactions;';
-    const dropCategories = 'DROP TABLE IF EXISTS categories;';
-
-    if (this.database) {
-      try {
-        console.log(
-          'Dropping transactions table:',
-          this.database.execute(dropTransactions),
-        );
-        console.log(
-          'Dropping categories table:',
-          this.database.execute(dropCategories),
-        );
-      } catch (error) {
-        console.error('Error dropping tables:', error);
-      }
-    } else {
-      console.error('Database is not initialized');
-    }
-  }
-
-  // Get all transactions
   getAllTransactionsReactively(setter): Transaction[] {
     const query = `SELECT 
                       t.*, 
@@ -237,6 +241,28 @@ class DbService {
     });
   }
 
+  dropTables() {
+    const dropTransactions = 'DROP TABLE IF EXISTS transactions;';
+    const dropCategories = 'DROP TABLE IF EXISTS categories;';
+
+    if (this.database) {
+      try {
+        console.log(
+          'Dropping transactions table:',
+          this.database.execute(dropTransactions),
+        );
+        console.log(
+          'Dropping categories table:',
+          this.database.execute(dropCategories),
+        );
+      } catch (error) {
+        console.error('Error dropping tables:', error);
+      }
+    } else {
+      console.error('Database is not initialized');
+    }
+  }
+
   // Update a transaction
   updateTransaction(transaction: Transaction): boolean {
     const { id, amount, description, date, type } = transaction;
@@ -252,6 +278,12 @@ class DbService {
       type,
       id,
     ]).insertId;
+  }
+
+  //Delete Category
+  deleteCategory(id: number): boolean {
+    const query = 'DELETE FROM categories WHERE id = ?';
+    return this.database?.execute(query, [id]);
   }
 
   // Delete a transaction

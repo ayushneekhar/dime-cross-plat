@@ -1,32 +1,32 @@
-import { useCallback, useState } from 'react';
-import { Category } from './types';
+import { useCallback, useEffect, useState } from 'react';
+import { Category, Transaction } from './types';
 import { dbService } from './db-service';
 import { useFocusEffect } from 'expo-router';
-import { MMKVConstants } from '@/constants/MMKVConstants';
-import { storage } from './MMKV';
 
-export function useGetAllCategories() {
-  const userId = storage.getString(MMKVConstants.USER_ID);
+export function useGetAllCategories({
+  type = 'expense',
+}: {
+  type: 'income' | 'expense';
+} = {}) {
   const [categories, setCategories] = useState<Category[]>(
-    dbService.getCategoriesByUser(userId),
+    dbService.getCategoriesByType(type),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      const subscription = dbService.getCategoriesByUserReactively(
-        userId,
-        setCategories,
-      );
+  useEffect(() => {
+    const subscription = dbService.getCategoriesByTypeReactively(
+      type,
+      setCategories,
+    );
+    setCategories(dbService.getCategoriesByType(type));
 
-      return subscription;
-    }, [userId]),
-  );
+    return subscription;
+  }, [type]);
 
   return categories;
 }
 
 export function useGetAllTransactions() {
-  const [transactions, setTransactions] = useState<Category[]>(
+  const [transactions, setTransactions] = useState<Transaction[]>(
     dbService.getAllTransactions(),
   );
 

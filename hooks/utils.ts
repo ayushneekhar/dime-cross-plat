@@ -19,3 +19,7 @@ export const isEmoji = str => {
     ? str.match(emojiRegex)[0].length === str.length
     : false;
 };
+
+export function sign(value: number) {
+  return value > 0 ? '+' : '-';
+}

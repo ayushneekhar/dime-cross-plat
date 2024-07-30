@@ -5,7 +5,7 @@ import {
   useColorScheme,
   StyleSheet,
 } from 'react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ThemedText } from '@/components/ThemedText';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AntDesign, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -34,19 +34,32 @@ import ExpenseTabSelector from '@/components/ExpenseTabSelector';
 
 const KEYBOARD = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'D'];
 
-const ListHeader = ({
-  selectedCategory,
-  setSelectedCategory,
-  setOpen,
-  selectedTime,
-  navigation,
-  selectedDate,
-  offset,
-  color,
-}) => {
-  const colorScheme = useColorScheme();
+const AddTransaction = () => {
+  const [open, setOpen] = React.useState(false);
+  const [selectedCategory, setSelectedCategory] = React.useState();
+  const [description, setDescription] = React.useState('');
+  const [selectedTime, setSelectedTime] = React.useState(new Date());
+  const [selectedDate, setSelectedDate] = React.useState(
+    dayjs().format('YYYY-MM-DD'),
+  );
+  const [currentTab, setCurrentTab] = React.useState<'expense' | 'income'>(
+    'expense',
+  );
+  const [amount, setAmount] = React.useState(0);
 
-  const allCategories = useGetAllCategories();
+  useEffect(() => {
+    setSelectedCategory(null);
+    setAmount(0);
+    setDescription('');
+  }, [currentTab]);
+
+  const allCategories = useGetAllCategories({ type: currentTab });
+  const offset = useSharedValue(0);
+  const color = useSharedValue(0);
+
+  const navigation = useNavigation();
+  const { top } = useSafeAreaInsets();
+  const colorScheme = useColorScheme();
 
   const style = useAnimatedStyle(() => ({
     transform: [{ translateX: offset.value }],
@@ -58,89 +71,6 @@ const ListHeader = ({
       [Colors[colorScheme].tint, 'red'],
     ),
   }));
-
-  function date(dateString: string) {
-    if (dayjs(dateString).isSame(dayjs(), 'day')) {
-      return `Today, ${dayjs().format('D MMM')}`;
-    } else return dayjs(dateString).format('ddd, D MMM');
-  }
-
-  return (
-    <XStack mb={5} f={1}>
-      <XStack
-        onPress={() => setOpen(true)}
-        ai={'center'}
-        bc={'rgba(155, 153, 150, 0.3)'}
-        bw={1}
-        br={10}
-        f={1}
-        paddingHorizontal={10}
-        mr={10}>
-        <AntDesign
-          name="calendar"
-          size={20}
-          color={Colors[colorScheme].tint}
-          style={styles.listHeaderIcons}
-        />
-        <XStack f={1} jc={'space-between'}>
-          <ThemedText type="defaultSemiBold">{date(selectedDate)}</ThemedText>
-          <ThemedText type="defaultSemiBold">
-            {dayjs(selectedTime.toUTCString()).format('HH:mm')}
-          </ThemedText>
-        </XStack>
-      </XStack>
-      <CategoryPopover
-        navigation={navigation}
-        placement="top"
-        categories={allCategories}
-        selectedCategory={selectedCategory}
-        onSelect={setSelectedCategory}
-        Name="category-popover"
-        Icon={() => (
-          <Animated.View style={style}>
-            <XStack
-              ai={'center'}
-              jc={'center'}
-              backgroundColor={'$colorTransparent'}>
-              {!selectedCategory && (
-                <MaterialIcons
-                  name="category"
-                  size={20}
-                  color={Colors[colorScheme].tint}
-                  style={styles.listHeaderIcons}
-                />
-              )}
-              <ThemedText
-                isAnimated
-                style={[textColorStlye, { fontWeight: 30 }]}>
-                {selectedCategory?.icon ? selectedCategory.icon : ''}{' '}
-                {selectedCategory?.name ? selectedCategory.name : 'Category'}
-              </ThemedText>
-            </XStack>
-          </Animated.View>
-        )}
-      />
-    </XStack>
-  );
-};
-
-const AddTransaction = () => {
-  const [open, setOpen] = React.useState(false);
-  const [selectedCategory, setSelectedCategory] = React.useState();
-  const [description, setDescription] = React.useState('');
-  const [selectedTime, setSelectedTime] = React.useState(new Date());
-  const [selectedDate, setSelectedDate] = React.useState(
-    dayjs().format('YYYY-MM-DD'),
-  );
-  const [currentTab, setCurrentTab] = React.useState<'expense' | 'income'>(0);
-  const [amount, setAmount] = React.useState(0);
-
-  const offset = useSharedValue(0);
-  const color = useSharedValue(0);
-
-  const navigation = useNavigation();
-  const { top } = useSafeAreaInsets();
-  const colorScheme = useColorScheme();
 
   return (
     <View style={[styles.screen(top)]}>
@@ -202,21 +132,79 @@ const AddTransaction = () => {
       </XStack>
       <View style={styles.keyboardContainer}>
         <FlatList
-          ListHeaderComponent={() => (
-            <ListHeader
-              color={color}
-              offset={offset}
-              selectedDate={selectedDate}
-              selectedTime={selectedTime}
-              setOpen={setOpen}
-              setSelectedCategory={setSelectedCategory}
-              selectedCategory={selectedCategory}
-              navigation={navigation}
-            />
-          )}
+          ListHeaderComponent={() => {
+            function date(dateString: string) {
+              if (dayjs(dateString).isSame(dayjs(), 'day')) {
+                return `Today, ${dayjs().format('D MMM')}`;
+              } else return dayjs(dateString).format('ddd, D MMM');
+            }
+
+            return (
+              <XStack mb={5} f={1}>
+                <XStack
+                  onPress={() => setOpen(true)}
+                  ai={'center'}
+                  bc={'rgba(155, 153, 150, 0.3)'}
+                  bw={1}
+                  br={10}
+                  f={1}
+                  paddingHorizontal={10}
+                  mr={10}>
+                  <AntDesign
+                    name="calendar"
+                    size={20}
+                    color={Colors[colorScheme].tint}
+                    style={styles.listHeaderIcons}
+                  />
+                  <XStack f={1} jc={'space-between'}>
+                    <ThemedText type="defaultSemiBold">
+                      {date(selectedDate)}
+                    </ThemedText>
+                    <ThemedText type="defaultSemiBold">
+                      {dayjs(selectedTime.toUTCString()).format('HH:mm')}
+                    </ThemedText>
+                  </XStack>
+                </XStack>
+                <CategoryPopover
+                  navigation={navigation}
+                  placement="top"
+                  categories={allCategories}
+                  selectedCategory={selectedCategory}
+                  onSelect={setSelectedCategory}
+                  Name="category-popover"
+                  Icon={() => (
+                    <Animated.View style={style}>
+                      <XStack
+                        ai={'center'}
+                        jc={'center'}
+                        backgroundColor={'$colorTransparent'}>
+                        {!selectedCategory && (
+                          <MaterialIcons
+                            name="category"
+                            size={20}
+                            color={Colors[colorScheme].tint}
+                            style={styles.listHeaderIcons}
+                          />
+                        )}
+                        <ThemedText
+                          isAnimated
+                          style={[textColorStlye, { fontWeight: 30 }]}>
+                          {selectedCategory?.icon ? selectedCategory.icon : ''}{' '}
+                          {selectedCategory?.name
+                            ? selectedCategory.name
+                            : 'Category'}
+                        </ThemedText>
+                      </XStack>
+                    </Animated.View>
+                  )}
+                />
+              </XStack>
+            );
+          }}
           contentContainerStyle={styles.keyboardListContainer}
           scrollEnabled={false}
           data={KEYBOARD}
+          keyExtractor={item => item}
           numColumns={3}
           renderItem={({ item, index }) => (
             <AnimatedButton

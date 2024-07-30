@@ -10,6 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Button, Separator, Stack, XStack, YStack } from 'tamagui';
 import { dbService } from '@/hooks/db-service';
 import { useGetAllTransactions } from '@/hooks/useReactiveQuery';
+import { sign } from '@/hooks/utils';
 
 const CURRENCY = '₹';
 const TOTAL = 20_534.0;
@@ -31,9 +32,6 @@ export default function HomeScreen() {
     return dayjs(date).format('ddd, D MMM').toLocaleUpperCase();
   }
 
-  function sign(value: number) {
-    return value > 0 ? '+' : '-';
-  }
   return (
     <View style={styles.screen(Colors[colorScheme].background, top)}>
       <View style={styles.headerContainer}>
@@ -77,7 +75,7 @@ export default function HomeScreen() {
                 <ThemedText>{label(date)}</ThemedText>
                 <ThemedText>
                   {sign(total)}
-                  {CURRENCY} {total}
+                  {CURRENCY} {total?.toLocaleString()}
                 </ThemedText>
               </ThemedView>
               <Separator borderWidth={1} mt={5} />
@@ -106,7 +104,7 @@ export default function HomeScreen() {
               </XStack>
               <ThemedText style={styles.transaction}>
                 {sign(item.amount)}
-                {CURRENCY} {item.amount}
+                {CURRENCY} {Math.abs(item.amount)?.toLocaleString()}
               </ThemedText>
             </ThemedView>
           )}
